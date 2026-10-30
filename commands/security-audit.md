@@ -9,9 +9,14 @@ as given). Two layers, in order: deterministic scanners first, then an independe
 
 ## 1. Scope the change
 
-Resolve the range and list the changed files with `git diff --stat`. Exclude nothing yet. If
-nothing changed, say so and stop. If the change touches only documentation or planning files,
-say so, run step 2 only, and skip the auditor.
+Resolve the range and list the changed files with `git diff --stat`, including files git does
+not yet track. Then drop what is not product code: documentation, planning artifacts, lock
+files, images, and **everything under tests, fixtures, mocks and cassettes**. Tests are not
+shipped, so a defect in one is not exploitable, and fixtures are full of patterns that look
+alarming and are not.
+
+Say what you dropped and how many files remain. If nothing is left, say so, run step 2 over the
+change anyway for secrets, and skip the auditor.
 
 ## 2. Deterministic scanners
 
@@ -28,8 +33,9 @@ installed is "not configured", never a pass. Fix nothing yet.
 ## 3. Independent audit
 
 Dispatch the `security-auditor` subagent with the Agent tool, one dispatch for the change. Give
-it only: the repository root as an absolute path, the resolved diff range, the list of changed
-files, and the path of the project's exclusion file if it exists. Do not give it your own
+it only: the repository root as an absolute path, the resolved diff range, the list of product
+files from step 1 (never the test files), and the path of the project's exclusion file if it
+exists. Do not give it your own
 opinion of the change, what you believe is safe, or any conclusion you have already drawn: a
 reviewer handed a hypothesis returns it confirmed. Do not audit the change yourself in parallel.
 

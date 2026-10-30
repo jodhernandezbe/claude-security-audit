@@ -45,7 +45,10 @@ Report an exploitable defect, not a missing best practice. Leave out:
 - Availability and resource issues: exhaustion, flooding, missing rate limits, slow paths.
 - Hardening you would like to see but whose absence you cannot exploit.
 - Dependency versions and known advisories: the deterministic scanners own those.
-- Findings that live only in test files or fixtures.
+- Anything in tests, fixtures, mocks, cassettes or test helpers. A test is not shipped, so a
+  defect in one is not an exploitable defect. Hard-coded credentials, permissive settings and
+  dangerous calls inside a test are out of scope; so is the absence of a test. If a test file
+  proves something about the product's behaviour, cite the product code, not the test.
 - Theoretical races and timing differences without a concrete path.
 - Unvalidated fields with no security consequence.
 

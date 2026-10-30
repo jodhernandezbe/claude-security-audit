@@ -10,8 +10,10 @@ set -u
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 STATE="$ROOT/.claude/.security-audit-state"
-# Paths never worth auditing: docs, planning artifacts, lock files, images.
-SKIP_RE='(^|/)(docs|openspec|\.openspec|node_modules|\.venv|dist|build)/|\.(md|txt|lock|png|jpe?g|svg|gif|ico|snap)$|(^|/)__screenshots__/'
+# Paths never worth auditing: docs, planning artifacts, lock files, images, and tests.
+# Tests are excluded deliberately: a defect in a test is not an exploitable defect in the
+# product, and test fixtures are full of patterns that look alarming and are not.
+SKIP_RE='(^|/)(docs|openspec|\.openspec|node_modules|\.venv|dist|build)/|\.(md|txt|lock|png|jpe?g|svg|gif|ico|snap)$|(^|/)__screenshots__/|(^|/)(tests?|__tests__|__mocks__|fixtures|cassettes|e2e)/|(^|/)conftest\.py$|(^|/)test_[^/]*\.py$|_test\.py$|\.(test|spec|visual)\.[jt]sx?$'
 
 # Changed tracked files and brand-new untracked ones: a new module is the commonest way new
 # code arrives, and it has no diff against HEAD, so it must be listed separately.
