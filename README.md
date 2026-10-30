@@ -37,7 +37,9 @@ dispatch, because a reviewer handed a conclusion returns it confirmed.
 ```
 
 Then fill `.claude/security-audit-scanners.md` with the project's real commands, run
-`/security-audit` once, and commit `.claude/`. Colleagues get everything on their next pull;
+`/security-audit` once, and commit `.claude/`. **Start a new Claude Code session before the
+first audit**: subagents in `.claude/agents/` are discovered at session start, so the auditor is
+not dispatchable in the session that installed it. Colleagues get everything on their next pull;
 Claude Code asks each of them once to trust the project's hooks.
 
 In Claude Code, `/security-audit-init` does all of that for you.
@@ -53,6 +55,16 @@ In Claude Code, `/security-audit-init` does all of that for you.
 
 To audit a branch or a range instead of the working tree: `/security-audit branch` or
 `/security-audit main..HEAD`.
+
+## Writing the scanner commands
+
+Two things make a scanner row wrong in a way that reads as success:
+
+- **A tool that reports "Skipped" or "no files to check" has not passed.** The audit is told to
+  report that as a failure to investigate.
+- **Shell differences in the file list.** `--files $FILES` word-splits in bash and does not in
+  zsh, where the whole list arrives as one argument. Prefer piping the paths into `xargs`, which
+  behaves the same in both.
 
 ## Tuning the noise
 
