@@ -13,12 +13,25 @@ STATE="$ROOT/.claude/.security-audit-state"
 # Paths never worth auditing: docs, planning artifacts, lock files, images.
 SKIP_RE='(^|/)(docs|openspec|\.openspec|node_modules|\.venv|dist|build)/|\.(md|txt|lock|png|jpe?g|svg|gif|ico|snap)$|(^|/)__screenshots__/'
 
+# Changed tracked files and brand-new untracked ones: a new module is the commonest way new
+# code arrives, and it has no diff against HEAD, so it must be listed separately.
+candidates() {
+  {
+    git -C "$ROOT" diff HEAD --name-only 2>/dev/null
+    git -C "$ROOT" ls-files --others --exclude-standard 2>/dev/null
+  } | sort -u | grep -Ev "$SKIP_RE"
+}
+
 digest() {
-  git -C "$ROOT" diff HEAD --name-only 2>/dev/null |
-    grep -Ev "$SKIP_RE" |
+  candidates |
     while IFS= read -r file; do
+      [ -n "$file" ] || continue
       printf '%s\n' "$file"
-      git -C "$ROOT" diff HEAD -- "$file" 2>/dev/null
+      if git -C "$ROOT" ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+        git -C "$ROOT" diff HEAD -- "$file" 2>/dev/null
+      else
+        cat "$ROOT/$file" 2>/dev/null
+      fi
     done | shasum | cut -d' ' -f1
 }
 
