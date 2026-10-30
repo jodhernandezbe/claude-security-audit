@@ -30,7 +30,27 @@ context: it sees the diff, the repository and the project's exclusions, and noth
 reasoning that produced the change. The command is explicit that no hypothesis travels with the
 dispatch, because a reviewer handed a conclusion returns it confirmed.
 
-## Install
+## The one command
+
+Once per machine, link the user-level init command:
+
+```sh
+ln -sf ~/Documents/claude-security-audit/user-command/security-audit-init.md ~/.claude/commands/security-audit-init.md
+```
+
+It is a symlink, so editing the kit updates the command everywhere. A new command appears in the
+next Claude Code session.
+
+Then, in any project:
+
+```
+/security-audit-init
+```
+
+It runs the installer, works out which scanners that project already has and writes their exact
+commands down, asks about the gaps, checks the gate, and lists the files to commit.
+
+## Install by hand
 
 ```sh
 ./install.sh /path/to/project
