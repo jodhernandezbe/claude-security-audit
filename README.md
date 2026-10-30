@@ -1,0 +1,70 @@
+# claude-security-audit
+
+Makes every change in a project get an **independent** security audit, automatically, inside
+Claude Code. The agent that wrote the code never reviews its own work.
+
+## The four pieces
+
+| Piece | File | What it does |
+| --- | --- | --- |
+| Auditor subagent | `.claude/agents/security-auditor.md` | Read-only, separate context. Audits a diff for exploitable defects, verifies each candidate before reporting, cites `file:line` for the input, the sink and the missing check. |
+| Command | `.claude/commands/security-audit.md` | `/security-audit`: runs the project's deterministic scanners, then dispatches the auditor, then reports both layers together. |
+| Gate hook | `.claude/hooks/security-audit-gate.sh` | A `Stop` hook. When a turn ends with source changes that have not been audited, it tells Claude to run the audit before finishing. |
+| State script | `.claude/hooks/security-audit-state.sh` | Digests the current source diff so the gate knows what has already been audited. Not committed. |
+
+Plus two project files you own: `security-audit-scanners.md` (the exact scanner commands) and
+`security-audit-rules.md` (findings this project has decided are noise, with reasons).
+
+## Why two layers
+
+Scanners and a model fail differently. Deterministic tools exhaustively check what they know:
+secrets, known advisories, taint patterns they ship rules for. They cannot read intent, so they
+miss a missing authorisation check or a trust boundary crossed in a way no rule describes. A
+model reads intent but is not exhaustive and will invent findings if you let it. Running both,
+and making the model verify before reporting, is what keeps the output short enough to read.
+
+## Why independent
+
+A model asked to review its own diff rates its own work. The auditor is a subagent with its own
+context: it sees the diff, the repository and the project's exclusions, and nothing of the
+reasoning that produced the change. The command is explicit that no hypothesis travels with the
+dispatch, because a reviewer handed a conclusion returns it confirmed.
+
+## Install
+
+```sh
+./install.sh /path/to/project
+```
+
+Then fill `.claude/security-audit-scanners.md` with the project's real commands, run
+`/security-audit` once, and commit `.claude/`. Colleagues get everything on their next pull;
+Claude Code asks each of them once to trust the project's hooks.
+
+In Claude Code, `/security-audit-init` does all of that for you.
+
+## How the gate behaves
+
+- It fires when the turn ends, not on every edit, so one audit covers a whole piece of work.
+- It ignores documentation, planning files, lock files and images.
+- It stays silent when the diff it would audit is already recorded as audited.
+- It never loops: when Claude is already continuing because of a stop hook, it does nothing.
+- It blocks the turn with a reason rather than running anything itself, so no scan ever delays
+  your prompt.
+
+To audit a branch or a range instead of the working tree: `/security-audit branch` or
+`/security-audit main..HEAD`.
+
+## Tuning the noise
+
+When an audit reports something the team judges not a defect here, add one narrow line to
+`.claude/security-audit-rules.md` saying what and why. The auditor reads it on every run. Keep
+the rules specific: a broad rule hides real defects, which is the one failure mode worse than
+noise.
+
+## Limits
+
+- The auditor reads code; it does not run it. A defect that only appears at runtime is out of
+  reach, and it says so rather than guessing.
+- It is not hardened against a repository that contains instructions aimed at it. Its prompt
+  treats repository text as data, but do not point it at code you do not trust.
+- It audits the diff, not the whole codebase. For a full sweep use a dedicated scan.
