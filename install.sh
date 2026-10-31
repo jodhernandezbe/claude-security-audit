@@ -16,7 +16,23 @@ if [ -z "$PROJECT" ] || [ ! -d "$PROJECT" ]; then
   echo "usage: $0 <project-root>" >&2
   exit 1
 fi
-PROJECT="$(cd "$PROJECT" && pwd)"
+PROJECT="$(cd "$PROJECT" && pwd -P)"
+
+# The argument is the PROJECT ROOT. Installing into a subdirectory puts .claude where Claude
+# Code will not find it from the rest of the repository, so refuse and print the right command.
+ROOT="$(git -C "$PROJECT" rev-parse --show-toplevel 2>/dev/null || true)"
+[ -n "$ROOT" ] && ROOT="$(cd "$ROOT" && pwd -P)"
+if [ -n "$ROOT" ] && [ "$ROOT" != "$PROJECT" ]; then
+  echo "error: '$PROJECT' is not the project root; it is inside the repository at:" >&2
+  echo "         $ROOT" >&2
+  echo "       .claude/ belongs at the root. Did you mean:" >&2
+  echo "         $0 \"$ROOT\"" >&2
+  exit 1
+fi
+if [ -z "$ROOT" ] && [ ! -d "$PROJECT/.git" ]; then
+  echo "note: '$PROJECT' is not a git repository; installing there as the project root." >&2
+fi
+
 say() { printf '  %s\n' "$*"; }
 
 echo "security-audit -> $PROJECT"
@@ -60,7 +76,8 @@ done
 
 # The state file is per working tree, never committed.
 IGNORE="$PROJECT/.gitignore"
-if [ -f "$IGNORE" ] && ! grep -q '\.security-audit-state' "$IGNORE"; then
+[ -f "$IGNORE" ] || : > "$IGNORE"
+if ! grep -q '\.security-audit-state' "$IGNORE"; then
   printf '\n# Which changes the security audit has already seen (per working tree)\n.claude/.security-audit-state\n' >> "$IGNORE"
   say "gitignore .claude/.security-audit-state added"
 fi

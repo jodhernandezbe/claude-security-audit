@@ -41,6 +41,10 @@ ln -sf ~/Documents/claude-security-audit/user-command/security-audit-init.md ~/.
 It is a symlink, so editing the kit updates the command everywhere. A new command appears in the
 next Claude Code session.
 
+On Windows, copy instead of linking (`cp user-command/*.md ~/.claude/commands/` from Git
+Bash) and re-copy after kit changes. See **Windows** below.
+
+
 Then, in any project:
 
 ```
@@ -92,6 +96,47 @@ When an audit reports something the team judges not a defect here, add one narro
 `.claude/security-audit-rules.md` saying what and why. The auditor reads it on every run. Keep
 the rules specific: a broad rule hides real defects, which is the one failure mode worse than
 noise.
+
+## Windows
+
+Everything here is shell scripts, so Windows needs a bash. Git for Windows provides one, and
+Claude Code works with it. WSL also works and behaves like Linux throughout.
+
+**1. Install the prerequisites.** [Git for Windows](https://gitforwindows.org/) gives you Git
+Bash plus `sed`, `awk`, `grep`, `cut`, `mktemp` and `xargs`. Add `jq` as well
+(`winget install jqlang.jq`): the scripts fall back to text parsing without it, but the
+installer cannot merge hook settings and will print a snippet for you to paste instead.
+
+**2. Run the installer from Git Bash,** not PowerShell or `cmd`:
+
+```sh
+./install.sh /c/Users/you/code/your-project
+```
+
+Git Bash paths start `/c/` rather than `C:\`.
+
+**3. Link the init command by copying it.** `ln -sf` needs Developer Mode or an elevated shell
+on Windows, so copy instead, from Git Bash:
+
+```sh
+cp user-command/*.md ~/.claude/commands/
+```
+
+A copy does not track kit updates the way a symlink does, so re-run that `cp` after you change
+the kit. If you would rather have a real link, PowerShell as administrator can make one:
+
+```powershell
+New-Item -ItemType SymbolicLink -Path "$HOME\.claude\commands\<name>.md" -Target "<kit>\user-command\<name>.md"
+```
+
+**4. Hooks need `bash` on the system PATH.** The hook entries run
+`bash "$CLAUDE_PROJECT_DIR/.claude/hooks/<script>.sh"`. Git Bash installs `bash.exe` under
+`C:\Program Files\Git\bin`; if that is not on PATH, the hook silently does nothing. Check from
+PowerShell with `where.exe bash`, and add that folder to PATH if it is missing.
+
+**5. Line endings.** If `core.autocrlf` rewrites the scripts to CRLF, bash fails with
+`bad interpreter: /usr/bin/env bash^M`. The kit ships a `.gitattributes` that keeps `*.sh` as LF.
+If you hit it anyway, run `git config core.autocrlf input` and re-checkout.
 
 ## Limits
 
