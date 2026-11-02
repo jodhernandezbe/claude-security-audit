@@ -1,0 +1,12 @@
+{
+  "name": "security-audit",
+  "version": "1.0.0",
+  "description": "Independent security audit of every change inside Claude Code: a read-only auditor subagent, /security-audit that runs the project's scanners then the auditor, a Stop gate that asks for an audit before unaudited source changes land, and /security-audit:init to incorporate it into a project.",
+  "author": {
+    "name": "jodhernandezbe",
+    "url": "https://github.com/jodhernandezbe"
+  },
+  "homepage": "https://github.com/jodhernandezbe/claude-security-audit",
+  "repository": "https://github.com/jodhernandezbe/claude-security-audit",
+  "keywords": ["security", "audit", "sast", "secrets", "stop-hook"]
+}

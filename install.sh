@@ -10,6 +10,7 @@
 set -euo pipefail
 
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC="$KIT/project"   # what gets copied into the project; the plugin surface itself is commands/
 PROJECT="${1:-}"
 
 if [ -z "$PROJECT" ] || [ ! -d "$PROJECT" ]; then
@@ -38,17 +39,17 @@ say() { printf '  %s\n' "$*"; }
 echo "security-audit -> $PROJECT"
 
 mkdir -p "$PROJECT/.claude/agents" "$PROJECT/.claude/commands" "$PROJECT/.claude/hooks"
-cp "$KIT/agents/security-auditor.md" "$PROJECT/.claude/agents/security-auditor.md"
-cp "$KIT/commands/security-audit.md" "$PROJECT/.claude/commands/security-audit.md"
-cp "$KIT/hooks/security-audit-gate.sh" "$PROJECT/.claude/hooks/security-audit-gate.sh"
-cp "$KIT/hooks/security-audit-state.sh" "$PROJECT/.claude/hooks/security-audit-state.sh"
+cp "$SRC/agents/security-auditor.md" "$PROJECT/.claude/agents/security-auditor.md"
+cp "$SRC/commands/security-audit.md" "$PROJECT/.claude/commands/security-audit.md"
+cp "$SRC/hooks/security-audit-gate.sh" "$PROJECT/.claude/hooks/security-audit-gate.sh"
+cp "$SRC/hooks/security-audit-state.sh" "$PROJECT/.claude/hooks/security-audit-state.sh"
 chmod +x "$PROJECT/.claude/hooks/security-audit-gate.sh" "$PROJECT/.claude/hooks/security-audit-state.sh"
 say "agent    .claude/agents/security-auditor.md"
 say "command  .claude/commands/security-audit.md"
 say "hooks    .claude/hooks/security-audit-{gate,state}.sh"
 
 SETTINGS="$PROJECT/.claude/settings.json"
-SNIPPET="$(cat "$KIT/hooks/settings.hooks.json")"
+SNIPPET="$(cat "$SRC/hooks/settings.hooks.json")"
 if ! command -v jq >/dev/null 2>&1; then
   say "settings jq not found: add this Stop hook to $SETTINGS by hand:"
   printf '%s\n' "$SNIPPET"
@@ -84,7 +85,7 @@ fi
 
 cat <<EOF
 
-Next steps (or run /security-audit-init in Claude Code, which does them):
+Next steps (or run /security-audit:init in Claude Code, which does them):
   1. Fill .claude/security-audit-scanners.md with this project's real scanner commands.
   2. Run /security-audit once to see the whole path work.
   3. Commit .claude/ so colleagues get the auditor, the command and the gate by cloning.

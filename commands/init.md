@@ -2,14 +2,15 @@
 description: Incorporate the independent security audit workflow into the current project (auditor subagent, /security-audit, Stop gate, scanner config), committed so every colleague gets it by cloning
 ---
 
-Incorporate the security-audit kit from `~/Documents/claude-security-audit` into the project in
-the current working directory. Everything lands inside the project and is meant to be committed,
-so colleagues need to install nothing. Work through these steps in order.
+Incorporate the security-audit kit into the project in the current working directory. The kit is
+this plugin; its files live at `${CLAUDE_PLUGIN_ROOT}`. Everything lands inside the project and
+is meant to be committed, so colleagues need to install nothing: they do not need this plugin.
+Work through these steps in order.
 
 0. **Resolve the project root.** Run `git rev-parse --show-toplevel` and use that path, not the directory you happen to be standing in. `.claude/` belongs at the repository root so Claude Code finds it from anywhere in the project. The installer refuses a root that is a subdirectory and prints the correct command; if you see that, fix the path rather than working around it.
 
-1. **Run the installer**: `~/Documents/claude-security-audit/install.sh "$(git rev-parse --show-toplevel)"`. It copies the
-   auditor subagent, the `/security-audit` command and the two hook scripts into `.claude/`,
+1. **Run the installer**: `bash "${CLAUDE_PLUGIN_ROOT}/install.sh" "$(git rev-parse --show-toplevel)"`.
+   It copies the auditor subagent, the `/security-audit` command and the two hook scripts into `.claude/`,
    registers the Stop hook without removing existing hooks, scaffolds the scanner and exclusion
    files only if absent, and adds the state file to `.gitignore`. Report what it printed.
 

@@ -32,23 +32,20 @@ dispatch, because a reviewer handed a conclusion returns it confirmed.
 
 ## The one command
 
-Once per machine, link the user-level init command:
+The kit is a Claude Code plugin. Once per machine, inside Claude Code:
 
-```sh
-ln -sf ~/Documents/claude-security-audit/user-command/security-audit-init.md ~/.claude/commands/security-audit-init.md
+```
+/plugin install security-audit --marketplace jodhernandezbe/claude-configs
 ```
 
-It is a symlink, so editing the kit updates the command everywhere. A new command appears in the
-next Claude Code session.
-
-On Windows, copy instead of linking (`cp user-command/*.md ~/.claude/commands/` from Git
-Bash) and re-copy after kit changes. See **Windows** below.
-
+(or `/plugin marketplace add jodhernandezbe/claude-configs` then
+`/plugin install security-audit@workflow-kits`). The command appears in the next session; the
+plugin updates with `/plugin`, nothing is copied by hand.
 
 Then, in any project:
 
 ```
-/security-audit-init
+/security-audit:init
 ```
 
 It runs the installer, works out which scanners that project already has and writes their exact
@@ -66,7 +63,10 @@ first audit**: subagents in `.claude/agents/` are discovered at session start, s
 not dispatchable in the session that installed it. Colleagues get everything on their next pull;
 Claude Code asks each of them once to trust the project's hooks.
 
-In Claude Code, `/security-audit-init` does all of that for you.
+In Claude Code, `/security-audit:init` does all of that for you.
+
+The plugin exposes only `init`. What the installer copies into a project lives under `project/`
+so that it is never loaded twice (once from the plugin, once from the project).
 
 ## How the gate behaves
 
@@ -115,26 +115,12 @@ installer cannot merge hook settings and will print a snippet for you to paste i
 
 Git Bash paths start `/c/` rather than `C:\`.
 
-**3. Link the init command by copying it.** `ln -sf` needs Developer Mode or an elevated shell
-on Windows, so copy instead, from Git Bash:
-
-```sh
-cp user-command/*.md ~/.claude/commands/
-```
-
-A copy does not track kit updates the way a symlink does, so re-run that `cp` after you change
-the kit. If you would rather have a real link, PowerShell as administrator can make one:
-
-```powershell
-New-Item -ItemType SymbolicLink -Path "$HOME\.claude\commands\<name>.md" -Target "<kit>\user-command\<name>.md"
-```
-
-**4. Hooks need `bash` on the system PATH.** The hook entries run
+**3. Hooks need `bash` on the system PATH.** The hook entries run
 `bash "$CLAUDE_PROJECT_DIR/.claude/hooks/<script>.sh"`. Git Bash installs `bash.exe` under
 `C:\Program Files\Git\bin`; if that is not on PATH, the hook silently does nothing. Check from
 PowerShell with `where.exe bash`, and add that folder to PATH if it is missing.
 
-**5. Line endings.** If `core.autocrlf` rewrites the scripts to CRLF, bash fails with
+**4. Line endings.** If `core.autocrlf` rewrites the scripts to CRLF, bash fails with
 `bad interpreter: /usr/bin/env bash^M`. The kit ships a `.gitattributes` that keeps `*.sh` as LF.
 If you hit it anyway, run `git config core.autocrlf input` and re-checkout.
 
